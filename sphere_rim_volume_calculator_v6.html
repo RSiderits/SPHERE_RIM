@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sphere Rim Volume Calculator</title>
+<style>
+    :root{
+        --bg: #ffe6ec;
+        --panel: #fffafb;
+        --accent: #c94f7c;
+        --accent-dark: #8e2e54;
+        --line: #d9a9b9;
+        --text: #2f2430;
+        --muted: #6b5a64;
+        --result-bg: #f5d7e1;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+    }
+
+    .page {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 28px 20px 36px;
+    }
+
+    h1 {
+        text-align: center;
+        margin: 0 0 10px;
+        font-size: 30px;
+        color: var(--accent-dark);
+    }
+
+    .subtitle {
+        text-align: left;
+        max-width: 920px;
+        margin: 0 auto 24px;
+        color: var(--muted);
+        line-height: 1.45;
+        font-size: 14px;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: 380px 1fr;
+        gap: 22px;
+        align-items: start;
+    }
+
+    .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        box-shadow: 0 8px 20px rgba(90, 40, 60, 0.08);
+        padding: 20px;
+    }
+
+    .panel h2 {
+        margin: 0 0 14px;
+        font-size: 20px;
+        color: var(--accent-dark);
+    }
+
+    .field {
+        margin-bottom: 16px;
+    }
+
+    label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 6px;
+        font-size: 14px;
+    }
+
+    .hint {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 4px;
+    }
+
+    input[type="number"] {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        font-size: 15px;
+        background: white;
+    }
+
+    .button-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 18px;
+    }
+
+    button {
+        border: none;
+        border-radius: 10px;
+        padding: 11px 16px;
+        font-size: 14px;
+        font-weight: bold;
+        cursor: pointer;
+        background: var(--accent);
+        color: white;
+    }
+
+    button.secondary {
+        background: #7a6270;
+    }
+
+    button:hover {
+        filter: brightness(0.97);
+    }
+
+    .error {
+        display: none;
+        margin-top: 14px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: #ffe0e0;
+        color: #8b1f1f;
+        border: 1px solid #e5aaaa;
+        font-size: 14px;
+    }
+
+    .results {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(180px, 1fr));
+        gap: 14px;
+        margin-top: 12px;
+    }
+
+    .result-card {
+        background: var(--result-bg);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 14px;
+    }
+
+    .result-label {
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .result-value {
+        font-size: 22px;
+        font-weight: bold;
+        color: var(--accent-dark);
+    }
+
+    .note {
+        margin-top: 16px;
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.45;
+    }
+
+    .diagram-wrap {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .diagram-box {
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 12px;
+    }
+
+    .diagram-title {
+        font-size: 16px;
+        font-weight: bold;
+        color: var(--accent-dark);
+        margin: 0 0 8px;
+    }
+
+    .legend {
+        display: flex;
+        gap: 18px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+        font-size: 13px;
+        color: var(--muted);
+    }
+
+    .legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .swatch {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        border: 1px solid rgba(0,0,0,0.12);
+    }
+
+    .swatch.outer { background: rgba(201,79,124,0.18); }
+    .swatch.inner { background: rgba(124,151,255,0.28); }
+    .swatch.rim { background: rgba(201,79,124,0.62); }
+
+    svg {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+
+    .table-box {
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+        background: white;
+    }
+
+    th, td {
+        border: 1px solid var(--line);
+        padding: 10px 12px;
+        text-align: left;
+    }
+
+    th {
+        background: #f7e5eb;
+        color: var(--accent-dark);
+    }
+
+    .footer {
+        margin-top: 18px;
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.45;
+    }
+
+    @media (max-width: 900px) {
+        .grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+</head>
+<body>
+<div class="page">
+    <h1>Sphere Rim Volume Calculator</h1>
+    <p class="subtitle">
+        This tool estimates the proportion of a roughly spherical tumor occupied by a staining rim.
+        Enter the outer tumor radius and the radius from the center to the inner boundary of the staining rim.
+        The calculator reports absolute volumes in mm³, the rim thickness in mm, the percent of total tumor volume represented by the rim,
+        and displays a live diagram of the sphere and rim.
+    </p>
+
+    <div class="grid">
+        <section class="panel">
+            <h2>Inputs</h2>
+
+            <div class="field">
+                <label for="radiusOuter">Outer Tumor Radius (mm)</label>
+                <input type="number" id="radiusOuter" step="any" min="0" value="10" />
+                <div class="hint">Distance from tumor center to the outer margin.</div>
+            </div>
+
+            <div class="field">
+                <label for="radiusInner">Inner Rim Radius (mm)</label>
+                <input type="number" id="radiusInner" step="any" min="0" value="8" />
+                <div class="hint">Distance from tumor center to the inner boundary of the staining rim.</div>
+            </div>
+
+            <div class="button-row">
+                <button type="button" onclick="calculateVolume()">Calculate</button>
+                <button type="button" class="secondary" onclick="resetForm()">Reset</button>
+            </div>
+
+            <div id="errorBox" class="error"></div>
+
+            <div class="results">
+                <div class="result-card">
+                    <div class="result-label">Total Tumor Volume</div>
+                    <div class="result-value" id="totalVolume">—</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">Inner Core Volume</div>
+                    <div class="result-value" id="innerVolume">—</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">Rim Volume</div>
+                    <div class="result-value" id="rimVolume">—</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">Rim Volume %</div>
+                    <div class="result-value" id="rimPercent">—</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">Rim Thickness</div>
+                    <div class="result-value" id="rimThickness">—</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">Interpretation</div>
+                    <div class="result-value" id="summaryText" style="font-size:18px;">—</div>
+                </div>
+            </div>
+
+            <div class="note">
+                Assumptions: the lesion is approximately spherical; the margin is biologically distinct from the tumor body;
+                the inner radius approximates the inner boundary of the expression ring; and the rim should be weighted relative
+                to total tumor size.
+            </div>
+        </section>
+
+        <section class="diagram-wrap">
+            <div class="panel diagram-box">
+                <div class="diagram-title">Live Diagram</div>
+                <svg id="diagram" viewBox="0 0 700 520" aria-label="Sphere and rim diagram">
+                    <defs>
+                        <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="3" markerHeight="3" orient="auto-start-reverse">
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#8e2e54"></path>
+                        </marker>
+                    </defs>
+
+                    <rect x="0" y="0" width="700" height="520" fill="#ffffff"></rect>
+
+                    <circle id="outerCircle" cx="250" cy="260" r="160" fill="rgba(201,79,124,0.18)" stroke="#8e2e54" stroke-width="3"></circle>
+                    <circle id="innerCircle" cx="250" cy="260" r="128" fill="rgba(124,151,255,0.28)" stroke="#5267b8" stroke-width="2"></circle>
+
+                    <line x1="250" y1="260" x2="400" y2="230" stroke="#8e2e54" stroke-width="3" marker-end="url(#arrow)"></line>
+                    <line x1="250" y1="260" x2="360" y2="290" stroke="#5267b8" stroke-width="3" marker-end="url(#arrow)"></line>
+
+                    <line id="thicknessLine" x1="122" y1="220" x2="90" y2="220" stroke="#b5456e" stroke-width="4" marker-start="url(#arrow)" marker-end="url(#arrow)"></line>
+
+                    <rect id="outerLabelBg" fill="white" stroke="black" stroke-width="1" rx="4" ry="4"></rect>
+                    <text id="outerLabel" x="420" y="250" font-size="18" fill="#8e2e54" font-weight="bold">Outer radius</text>
+                    <rect id="innerLabelBg" fill="white" stroke="black" stroke-width="1" rx="4" ry="4"></rect>
+                    <text id="innerLabel" x="390" y="285" font-size="18" fill="#5267b8" font-weight="bold">Inner radius</text>
+                    <rect id="thicknessLabelBg" fill="white" stroke="black" stroke-width="1" rx="4" ry="4"></rect>
+                    <text id="thicknessLabel" x="315" y="205" font-size="18" fill="#8e2e54" font-weight="bold">Rim thickness</text>
+
+                    <text x="480" y="40" font-size="22" fill="#8e2e54" font-weight="bold">Cross-sectional view</text>
+                    <text x="480" y="70" font-size="16" fill="#6b5a64">Outer sphere = total tumor</text>
+                    <text x="480" y="95" font-size="16" fill="#6b5a64">Inner sphere = non-rim core</text>
+                    <text x="480" y="120" font-size="16" fill="#6b5a64">Rim = outer shell of expression</text>
+                </svg>
+
+                <div class="legend">
+                    <div class="legend-item"><span class="swatch outer"></span> Total tumor sphere</div>
+                    <div class="legend-item"><span class="swatch inner"></span> Inner core</div>
+                    <div class="legend-item"><span class="swatch rim"></span> Expression rim</div>
+                </div>
+            </div>
+
+            <div class="panel table-box">
+                <div class="diagram-title">Calculation Summary</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Value</th>
+                            <th>Meaning</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Outer radius</td>
+                            <td id="tblOuterRadius">—</td>
+                            <td>Radius from center to tumor edge</td>
+                        </tr>
+                        <tr>
+                            <td>Inner radius</td>
+                            <td id="tblInnerRadius">—</td>
+                            <td>Radius from center to inner rim boundary</td>
+                        </tr>
+                        <tr>
+                            <td>Rim thickness</td>
+                            <td id="tblThickness">—</td>
+                            <td>Outer radius minus inner radius</td>
+                        </tr>
+                        <tr>
+                            <td>Total tumor volume</td>
+                            <td id="tblTotalVolume">—</td>
+                            <td>Entire spherical lesion volume</td>
+                        </tr>
+                        <tr>
+                            <td>Inner core volume</td>
+                            <td id="tblInnerVolume">—</td>
+                            <td>Estimated central non-rim volume</td>
+                        </tr>
+                        <tr>
+                            <td>Rim volume</td>
+                            <td id="tblRimVolume">—</td>
+                            <td>Outer shell volume = total minus inner core</td>
+                        </tr>
+                        <tr>
+                            <td>Rim fraction</td>
+                            <td id="tblRimPercent">—</td>
+                            <td>Rim volume as a percentage of total tumor volume</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="footer">
+                    Volumes are calculated as: <strong>V = 4/3 × π × r³</strong>.<br>
+                    Rim volume = outer sphere volume − inner sphere volume.
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<script>
+    function formatNumber(value, decimals = 1) {
+        return Number(value).toLocaleString(undefined, {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals
+        });
+    }
+
+    function showError(message) {
+        const box = document.getElementById('errorBox');
+        box.textContent = message;
+        box.style.display = 'block';
+    }
+
+    function clearError() {
+        const box = document.getElementById('errorBox');
+        box.textContent = '';
+        box.style.display = 'none';
+    }
+
+    function setText(id, text) {
+        document.getElementById(id).textContent = text;
+    }
+
+    
+    function updateLabelBox(textId, rectId) {
+        const textEl = document.getElementById(textId);
+        const rectEl = document.getElementById(rectId);
+        const bbox = textEl.getBBox();
+        rectEl.setAttribute('x', bbox.x - 4);
+        rectEl.setAttribute('y', bbox.y - 2);
+        rectEl.setAttribute('width', bbox.width + 8);
+        rectEl.setAttribute('height', bbox.height + 4);
+    }
+
+    function calculateVolume() {
+        clearError();
+
+        const outer = parseFloat(document.getElementById('radiusOuter').value);
+        const inner = parseFloat(document.getElementById('radiusInner').value);
+
+        if (isNaN(outer) || isNaN(inner)) {
+            showError('Please enter valid numeric values for both radii.');
+            return;
+        }
+
+        if (outer <= 0) {
+            showError('Outer tumor radius must be greater than 0.');
+            return;
+        }
+
+        if (inner < 0) {
+            showError('Inner rim radius cannot be negative.');
+            return;
+        }
+
+        if (inner >= outer) {
+            showError('Inner rim radius must be less than the outer tumor radius.');
+            return;
+        }
+
+        const totalVolume = (4 / 3) * Math.PI * Math.pow(outer, 3);
+        const innerVolume = (4 / 3) * Math.PI * Math.pow(inner, 3);
+        const rimVolume = totalVolume - innerVolume;
+        const rimPercent = (rimVolume / totalVolume) * 100;
+        const thickness = outer - inner;
+
+        setText('totalVolume', `${formatNumber(totalVolume, 1)} mm³`);
+        setText('innerVolume', `${formatNumber(innerVolume, 1)} mm³`);
+        setText('rimVolume', `${formatNumber(rimVolume, 1)} mm³`);
+        setText('rimPercent', `${formatNumber(rimPercent, 1)}%`);
+        setText('rimThickness', `${formatNumber(thickness, 1)} mm`);
+        setText('summaryText', `${formatNumber(rimPercent, 1)}% of tumor volume is rim`);
+
+        setText('tblOuterRadius', `${formatNumber(outer, 1)} mm`);
+        setText('tblInnerRadius', `${formatNumber(inner, 1)} mm`);
+        setText('tblThickness', `${formatNumber(thickness, 1)} mm`);
+        setText('tblTotalVolume', `${formatNumber(totalVolume, 1)} mm³`);
+        setText('tblInnerVolume', `${formatNumber(innerVolume, 1)} mm³`);
+        setText('tblRimVolume', `${formatNumber(rimVolume, 1)} mm³`);
+        setText('tblRimPercent', `${formatNumber(rimPercent, 1)}%`);
+
+        updateDiagram(outer, inner, thickness);
+    }
+
+    function updateDiagram(outer, inner, thickness) {
+        const maxDisplayRadius = 160;
+        const scale = maxDisplayRadius / outer;
+
+        const outerR = outer * scale;
+        const innerR = inner * scale;
+        const cx = 250;
+        const cy = 260;
+        const svgWidth = 700;
+        const svgHeight = 520;
+        const margin = 10;
+
+        const outerCircle = document.getElementById('outerCircle');
+        const innerCircle = document.getElementById('innerCircle');
+
+        outerCircle.setAttribute('cx', cx);
+        outerCircle.setAttribute('cy', cy);
+        outerCircle.setAttribute('r', outerR);
+
+        innerCircle.setAttribute('cx', cx);
+        innerCircle.setAttribute('cy', cy);
+        innerCircle.setAttribute('r', innerR);
+
+        const allLines = document.querySelectorAll('#diagram line');
+        const outerLine = allLines[0];
+        const innerLine = allLines[1];
+        const thicknessLine = document.getElementById('thicknessLine');
+
+        const outerAngle = -18 * Math.PI / 180;
+        const innerAngle = 16 * Math.PI / 180;
+
+        const outerArrowEndX = cx + outerR * Math.cos(outerAngle);
+        const outerArrowEndY = cy + outerR * Math.sin(outerAngle);
+        const innerArrowEndX = cx + innerR * Math.cos(innerAngle);
+        const innerArrowEndY = cy + innerR * Math.sin(innerAngle);
+
+        outerLine.setAttribute('x1', cx);
+        outerLine.setAttribute('y1', cy);
+        outerLine.setAttribute('x2', outerArrowEndX);
+        outerLine.setAttribute('y2', outerArrowEndY);
+
+        innerLine.setAttribute('x1', cx);
+        innerLine.setAttribute('y1', cy);
+        innerLine.setAttribute('x2', innerArrowEndX);
+        innerLine.setAttribute('y2', innerArrowEndY);
+
+        // place thickness on left side
+        const outerLeft = cx - outerR;
+        const innerLeft = cx - innerR;
+        thicknessLine.setAttribute('x1', innerLeft);
+        thicknessLine.setAttribute('y1', cy - 40);
+        thicknessLine.setAttribute('x2', outerLeft);
+        thicknessLine.setAttribute('y2', cy - 40);
+
+        const outerLabel = document.getElementById('outerLabel');
+        outerLabel.setAttribute('x', outerArrowEndX + 12);
+        outerLabel.setAttribute('y', outerArrowEndY - 6);
+        outerLabel.textContent = `Outer radius = ${formatNumber(outer, 1)} mm`;
+
+        const innerLabel = document.getElementById('innerLabel');
+        innerLabel.setAttribute('x', innerArrowEndX + 12);
+        innerLabel.setAttribute('y', innerArrowEndY + 8);
+        innerLabel.textContent = `Inner radius = ${formatNumber(inner, 1)} mm`;
+
+        const thicknessLabel = document.getElementById('thicknessLabel');
+        thicknessLabel.setAttribute('x', ((innerLeft + outerLeft) / 2) - 60);
+        thicknessLabel.setAttribute('y', cy - 52);
+        thicknessLabel.textContent = `Thickness = ${formatNumber(thickness, 1)} mm`;
+
+        // auto-fit labels within diagram bounds after text is updated
+        const labelPairs = [
+            ['outerLabel', 'outerLabelBg'],
+            ['innerLabel', 'innerLabelBg'],
+            ['thicknessLabel', 'thicknessLabelBg']
+        ];
+
+        labelPairs.forEach(([textId, rectId]) => {
+            updateLabelBox(textId, rectId);
+            const textEl = document.getElementById(textId);
+            const rectEl = document.getElementById(rectId);
+            let bbox = rectEl.getBBox();
+
+            let dx = 0;
+            let dy = 0;
+
+            if (bbox.x < margin) dx = margin - bbox.x;
+            if (bbox.x + bbox.width > svgWidth - margin) dx = (svgWidth - margin) - (bbox.x + bbox.width);
+            if (bbox.y < margin) dy = margin - bbox.y;
+            if (bbox.y + bbox.height > svgHeight - margin) dy = (svgHeight - margin) - (bbox.y + bbox.height);
+
+            if (dx !== 0 || dy !== 0) {
+                const currentX = parseFloat(textEl.getAttribute('x'));
+                const currentY = parseFloat(textEl.getAttribute('y'));
+                textEl.setAttribute('x', currentX + dx);
+                textEl.setAttribute('y', currentY + dy);
+                updateLabelBox(textId, rectId);
+            }
+        });
+    }
+
+    function resetForm() {
+        document.getElementById('radiusOuter').value = 10;
+        document.getElementById('radiusInner').value = 8;
+        clearError();
+
+        ['totalVolume','innerVolume','rimVolume','rimPercent','rimThickness','summaryText',
+         'tblOuterRadius','tblInnerRadius','tblThickness','tblTotalVolume','tblInnerVolume',
+         'tblRimVolume','tblRimPercent'].forEach(id => setText(id, '—'));
+
+        updateDiagram(10, 8, 2);
+    }
+
+    document.getElementById('radiusOuter').addEventListener('input', calculateVolume);
+    document.getElementById('radiusInner').addEventListener('input', calculateVolume);
+
+    calculateVolume();
+</script>
+</body>
+</html>
